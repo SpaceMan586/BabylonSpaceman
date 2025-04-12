@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Model Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <div class="file-controls">
+                <input type="file" id="fileInput" accept=".obj,.gltf,.glb">
+                <button id="loadButton">Muat Model</button>
+                <div id="loadingStatus" class="status-message">Pilih file model untuk dimuat</div>
+            </div>
+
+            <div class="light-controls">
+                <h3>Kontrol Pencahayaan</h3>
+                <div class="direction-preview">
+                    <div class="light-dot"></div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="posX">Kiri - Kanan</label>
+                    <input type="range" id="posX" min="0" max="100" value="50">
+                </div>
+                
+                <div class="control-group">
+                    <label for="posY">Atas - Bawah</label>
+                    <input type="range" id="posY" min="0" max="100" value="50">
+                </div>
+                
+                <div class="control-group">
+                    <label for="posZ">Depan - Belakang</label>
+                    <input type="range" id="posZ" min="0" max="100" value="50">
+                </div>
+                
+                <div class="control-group">
+                    <label for="intensity">Kekuatan Cahaya</label>
+                    <input type="range" id="intensity" min="0" max="100" value="50">
+                </div>
+                
+                <button id="toggleBtn" class="toggle-on">MATI/HIDUPKAN CAHAYA</button>
+            </div>
+        </div>
+
+        <canvas id="renderCanvas"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

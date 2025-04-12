@@ -1,0 +1,138 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+.controls {
+    width: 300px;
+    padding: 20px;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#renderCanvas {
+    flex: 1;
+    height: 100%;
+}
+
+.file-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.light-controls {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.direction-preview {
+    width: 120px;
+    height: 120px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    position: relative;
+    border: 2px solid #ddd;
+}
+
+.light-dot {
+    width: 24px;
+    height: 24px;
+    background: #ffcc00;
+    border-radius: 50%;
+    position: absolute;
+    top: 48px;
+    left: 48px;
+    box-shadow: 0 0 15px #ffcc00;
+    transition: all 0.2s ease;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+}
+
+#toggleBtn {
+    width: 100%;
+    padding: 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+#toggleBtn.toggle-off {
+    background: #f44336;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    padding: 8px 12px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+.status-message {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    background: #f8f8f8;
+    border: 1px solid #eee;
+    color: #333;
+}
+
+.status-message.loading {
+    color: #2196F3;
+    font-weight: bold;
+}
+
+.status-message.error {
+    color: #f44336;
+    font-weight: bold;
+}
+
+.status-message.success {
+    color: #4CAF50;
+    font-weight: bold;
+}
