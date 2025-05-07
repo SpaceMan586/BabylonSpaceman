@@ -1,129 +1,151 @@
-// Initialize Babylon.js
-const canvas = document.getElementById("renderCanvas");
+const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true);
-const scene = new BABYLON.Scene(engine);
-scene.clearColor = new BABYLON.Color4(0.1, 0.1, 0.1, 1);
+let scene, model, light, shadowGenerator, lightIndicator;
 
-// Register loaders
-BABYLON.SceneLoader.RegisterPlugin(new BABYLON.OBJFileLoader());
-const gltfLoader = new BABYLON.GLTFFileLoader();
-BABYLON.SceneLoader.RegisterPlugin(gltfLoader);
+function createLight(type, scene) {
+  if (light) light.dispose();
 
-// Set up camera
-const camera = new BABYLON.ArcRotateCamera("camera", Math.PI/2, Math.PI/4, 7, BABYLON.Vector3.Zero(), scene);
-camera.attachControl(canvas, true);
+  switch (type) {
+    case "directional":
+      light = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(0, -1, -1), scene);
+      break;
+    case "point":
+      light = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(0, 3, -3), scene);
+      break;
+    case "spot":
+      light = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 4, -4), BABYLON.Vector3.Zero(), Math.PI / 3, 2, scene);
+      break;
+    case "hemispheric":
+      light = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 0), scene);
+      break;
+  }
 
-// Set up lighting
-const mainLight = new BABYLON.DirectionalLight("mainLight", new BABYLON.Vector3(-1, -1, -0.5), scene);
-mainLight.intensity = 0.8;
-
-// Get DOM elements
-const lightDot = document.querySelector('.light-dot');
-const posX = document.getElementById('posX');
-const posY = document.getElementById('posY');
-const posZ = document.getElementById('posZ');
-const intensity = document.getElementById('intensity');
-const toggleBtn = document.getElementById('toggleBtn');
-const fileInput = document.getElementById('fileInput');
-const loadButton = document.getElementById('loadButton');
-const loadingStatus = document.getElementById('loadingStatus');
-let model = null;
-
-// Update light position and visual indicator
-function updateLightPosition() {
-    const x = parseFloat(posX.value) / 50 - 1;
-    const y = parseFloat(posY.value) / 50 - 1;
-    const z = parseFloat(posZ.value) / 50 - 1;
-    
-    mainLight.direction = new BABYLON.Vector3(x, y, z);
-    mainLight.intensity = parseFloat(intensity.value) / 50;
-    
-    lightDot.style.left = `${48 + x * 30}px`;
-    lightDot.style.top = `${48 + y * 30}px`;
+  updateLightProperties();
 }
 
-// Initialize light controls
-posX.value = 50;
-posY.value = 50;
-posZ.value = 50;
-intensity.value = 40;
-updateLightPosition();
+function updateLightProperties() {
+  if (!light) return;
 
-// Add event listeners for light controls
-[posX, posY, posZ, intensity].forEach(slider => {
-    slider.addEventListener('input', updateLightPosition);
-});
+  const intensity = parseFloat(document.getElementById("intensitySlider").value);
+  const radius = parseFloat(document.getElementById("radiusSlider").value);
+  const x = parseFloat(document.getElementById("lightX").value);
+  const y = parseFloat(document.getElementById("lightY").value);
+  const z = parseFloat(document.getElementById("lightZ").value);
 
-// Toggle light on/off
-toggleBtn.addEventListener('click', () => {
-    mainLight.setEnabled(!mainLight.isEnabled());
-    toggleBtn.classList.toggle('toggle-off', !mainLight.isEnabled());
-    toggleBtn.textContent = mainLight.isEnabled() ? 
-        'MATI/HIDUPKAN CAHAYA (ON)' : 'MATI/HIDUPKAN CAHAYA (OFF)';
-});
+  light.intensity = intensity;
+  if ("radius" in light) light.radius = radius;
+  if ("position" in light) light.position = new BABYLON.Vector3(x, y, z);
 
-// Model loading function
-async function loadModel(file) {
-    loadingStatus.textContent = "Memproses file...";
-    loadingStatus.className = "status-message loading";
+  // Update shadow generator
+  if (shadowGenerator) shadowGenerator.dispose();
+  if (light.getShadowGenerator) {
+    shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+    if (model) shadowGenerator.addShadowCaster(model);
+  }
 
-    try {
-        if (model) model.dispose();
-        
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        const objectUrl = URL.createObjectURL(file);
-        
-        const result = await BABYLON.SceneLoader.ImportMeshAsync(
-            null,
-            "",
-            objectUrl,
-            scene,
-            null,
-            "." + fileExt
-        );
-        
-        model = result.meshes[0];
-        model.position = BABYLON.Vector3.Zero();
-        
-        const boundingBox = model.getBoundingInfo().boundingBox;
-        camera.setTarget(boundingBox.center);
-        camera.radius = boundingBox.extendSize.length() * 2;
-        
-        loadingStatus.textContent = "Model berhasil dimuat!";
-        loadingStatus.className = "status-message success";
-        
-        URL.revokeObjectURL(objectUrl);
-    } catch (error) {
-        loadingStatus.textContent = `Error: ${error.message}`;
-        loadingStatus.className = "status-message error";
-        console.error("Model loading error:", error);
-    }
+  // Update the light indicator position
+  if (lightIndicator) {
+    lightIndicator.position = light.position.clone();
+  }
 }
 
-// File input handler
-loadButton.addEventListener('click', () => {
-    const file = fileInput.files[0];
-    if (file) {
-        loadModel(file);
-    } else {
-        loadingStatus.textContent = "Tidak ada file yang dipilih";
-        loadingStatus.className = "status-message error";
-    }
-});
+function createScene() {
+  scene = new BABYLON.Scene(engine);
+  scene.clearColor = new BABYLON.Color3(0.1, 0.1, 0.1);
 
-// Load test model
-async function loadTestModel() {
-    try {
-        const response = await fetch("model/bugatti.obj");
-        const blob = await response.blob();
-        const file = new File([blob], "bugatti.obj", { type: "model/obj" });
-        loadModel(file);
-    } catch (error) {
-        console.error("Failed to load test model:", error);
+  const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2.5, 4, BABYLON.Vector3.Zero(), scene);
+  camera.attachControl(canvas, true);
+  camera.useAutoRotationBehavior = true;
+
+  createLight("directional", scene);
+
+  const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
+  const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+  groundMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+  ground.material = groundMat;
+  ground.receiveShadows = true;
+
+  model = BABYLON.MeshBuilder.CreateBox("model", { size: 1 }, scene);
+  model.position.y = 0.5;
+  model.receiveShadows = true;
+  updateLightProperties();
+
+  // Create light position indicator
+  lightIndicator = BABYLON.MeshBuilder.CreateSphere("lightIndicator", { diameter: 0.2 }, scene);
+  lightIndicator.position = new BABYLON.Vector3(5, 5, 5);
+  lightIndicator.material = new BABYLON.StandardMaterial("lightMat", scene);
+  lightIndicator.material.emissiveColor = new BABYLON.Color3(1, 1, 0);  // Yellow
+
+  scene.onPointerObservable.add((pointerInfo) => {
+    if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERPICK && pointerInfo.pickInfo.hit) {
+      if (pointerInfo.pickInfo.pickedMesh === model) {
+        model.scaling = model.scaling.multiplyByFloats(1.1, 1.1, 1.1);
+      }
     }
+  });
+
+  return scene;
 }
 
-// Initialize
-loadTestModel();
+scene = createScene();
 engine.runRenderLoop(() => scene.render());
-window.addEventListener('resize', () => engine.resize());
+window.addEventListener("resize", () => engine.resize());
+
+document.getElementById("scaleSlider").addEventListener("input", (e) => {
+  const scale = parseFloat(e.target.value);
+  if (model) model.scaling = new BABYLON.Vector3(scale, scale, scale);
+});
+
+["lightType", "intensitySlider", "radiusSlider", "lightX", "lightY", "lightZ"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    const type = document.getElementById("lightType").value;
+    createLight(type, scene);
+  });
+});
+
+document.getElementById("modelUpload").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const fileReader = new FileReader();
+  fileReader.onload = () => {
+    const name = file.name.toLowerCase();
+    const data = new Uint8Array(fileReader.result);
+
+    BABYLON.SceneLoader.ImportMesh("", "file:", file, scene, (meshes) => {
+      if (model) model.dispose();
+      model = meshes[0];
+      model.position = new BABYLON.Vector3(0, 0.5, 0);
+      updateLightProperties();
+    });
+  };
+  fileReader.readAsArrayBuffer(file);
+});
+
+let animationStarted = false; // Flag to check if animation has started
+document.getElementById("playAnimationBtn").addEventListener("click", () => {
+  if (model && model.animations && model.animations.length > 0) {
+    if (!animationStarted) {
+      // Start the animation
+      scene.beginAnimation(model, 0, model.animations[0].frameCount, true);
+      animationStarted = true; // Set the flag to true
+    } else {
+      // Stop the animation if it's already playing
+      scene.stopAnimation(model);
+      animationStarted = false; // Reset the flag
+    }
+  } else {
+    alert("Model tidak memiliki animasi.");
+  }
+});
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  if (model) {
+    BABYLON.GLTF2Export.GLTFAsync(scene, "model.glb").then((glb) => {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(glb);
+      link.download = "model.glb";
+      link.click();
+    });
+  }
+});

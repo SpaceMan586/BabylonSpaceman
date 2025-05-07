@@ -1,54 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>3D Model Viewer</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>3D Model Viewer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="container">
-        <div class="controls">
-            <div class="file-controls">
-                <input type="file" id="fileInput" accept=".obj,.gltf,.glb">
-                <button id="loadButton">Muat Model</button>
-                <div id="loadingStatus" class="status-message">Pilih file model untuk dimuat</div>
-            </div>
-
-            <div class="light-controls">
-                <h3>Kontrol Pencahayaan</h3>
-                <div class="direction-preview">
-                    <div class="light-dot"></div>
-                </div>
-                
-                <div class="control-group">
-                    <label for="posX">Kiri - Kanan</label>
-                    <input type="range" id="posX" min="0" max="100" value="50">
-                </div>
-                
-                <div class="control-group">
-                    <label for="posY">Atas - Bawah</label>
-                    <input type="range" id="posY" min="0" max="100" value="50">
-                </div>
-                
-                <div class="control-group">
-                    <label for="posZ">Depan - Belakang</label>
-                    <input type="range" id="posZ" min="0" max="100" value="50">
-                </div>
-                
-                <div class="control-group">
-                    <label for="intensity">Kekuatan Cahaya</label>
-                    <input type="range" id="intensity" min="0" max="100" value="50">
-                </div>
-                
-                <button id="toggleBtn" class="toggle-on">MATI/HIDUPKAN CAHAYA</button>
-            </div>
-        </div>
-
-        <canvas id="renderCanvas"></canvas>
-    </div>
-
-    <script src="script.js"></script>
+  <header>
+    <h1>3D Model Viewer</h1>
+    <p>Explore and customize your 3D models with ease</p>
+  </header>
+  <div class="container">
+    <canvas id="renderCanvas"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label for="lightType">Jenis Cahaya:</label>
+        <select id="lightType">
+          <option value="directional">Directional</option>
+          <option value="point">Point</option>
+          <option value="spot">Spot</option>
+          <option value="hemispheric">Hemispheric</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="intensitySlider">Intensitas:</label>
+        <input type="range" id="intensitySlider" min="0" max="3" step="0.1" value="1.5">
+      </div>
+      <div class="control-group">
+        <label for="radiusSlider">Radius (untuk Point/Spot):</label>
+        <input type="range" id="radiusSlider" min="0.1" max="10" step="0.1" value="1">
+      </div>
+      <div class="control-group">
+        <label>Posisi Cahaya:</label>
+        <input type="number" id="lightX" value="5" step="0.1" />
+        <input type="number" id="lightY" value="5" step="0.1" />
+        <input type="number" id="lightZ" value="5" step="0.1" />
+      </div>
+      <div class="control-group">
+        <label for="scaleSlider">Skala Model:</label>
+        <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1">
+      </div>
+      <div class="control-group">
+        <label for="modelUpload">Unggah Model 3D:</label>
+        <input type="file" id="modelUpload" accept=".gltf,.glb,.obj">
+      </div>
+      <button id="downloadBtn">Unduh Model</button>
+      </div>
+      <div>
+        <button id="playAnimationBtn">Putar Animasi</button>
+      </div>
+  </div>
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylon.objFileLoader.min.js"></script>
+  <script src="https://cdn.babylonjs.com/serializers/babylon.glTF2Serializer.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
