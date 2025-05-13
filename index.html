@@ -46,17 +46,12 @@
         <label for="modelUpload">Unggah Model 3D:</label>
         <input type="file" id="modelUpload" accept=".gltf,.glb,.obj">
       </div>
-      <div class="control-group">
-        <label for="animationSelect">Pilih Animasi:</label>
-        <select id="animationSelect">
-          <option value="">(Tidak ada animasi)</option>
-        </select>
-        <button id="playSelectedAnimationBtn">Putar / Jeda</button>
-      </div>
       <button id="downloadBtn">Unduh Model</button>
-    </div>
+      </div>
+      <div>
+        <button id="playAnimationBtn">Putar Animasi</button>
+      </div>
   </div>
-
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylon.objFileLoader.min.js"></script>
