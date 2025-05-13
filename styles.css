@@ -1,5 +1,3 @@
-/* Refined dark theme with pleasant colors and clean layout */
-
 * {
   margin: 0;
   padding: 0;
@@ -215,21 +213,4 @@ input[type="file"]::file-selector-button:hover {
   button {
     width: 100%;
   }
-
-#animationSelect {
-  width: 160px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background-color: #222;
-  color: #e0e0e0;
-  font-weight: 500;
-  border: none;
-  box-shadow: inset 0 0 6px #000000aa;
-  transition: background-color 0.3s ease;
-}
-
-#animationSelect:hover,
-#animationSelect:focus {
-  background-color: #4fc3f7aa;
-  color: #121212;
 }
