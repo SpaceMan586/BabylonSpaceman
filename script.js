@@ -1,41 +1,19 @@
-let canvas = document.getElementById("renderCanvas");
-let engine = new BABYLON.Engine(canvas, true);
-let scene = new BABYLON.Scene(engine);
-let camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 10, BABYLON.Vector3.Zero(), scene);
-camera.attachControl(canvas, true);
-let light;
-let model = null;
-let animationGroups = [];
+const canvas = document.getElementById('renderCanvas');
+const engine = new BABYLON.Engine(canvas, true);
+let scene, model, light, shadowGenerator, lightIndicator;
 
-const lightTypeSelect = document.getElementById("lightType");
-const intensitySlider = document.getElementById("intensitySlider");
-const radiusSlider = document.getElementById("radiusSlider");
-const lightX = document.getElementById("lightX");
-const lightY = document.getElementById("lightY");
-const lightZ = document.getElementById("lightZ");
-const scaleSlider = document.getElementById("scaleSlider");
-const modelUpload = document.getElementById("modelUpload");
-const downloadBtn = document.getElementById("downloadBtn");
-const animationSelect = document.getElementById("animationSelect");
-const playBtn = document.getElementById("playSelectedAnimationBtn");
-
-function createLight(type) {
+function createLight(type, scene) {
   if (light) light.dispose();
-  const position = new BABYLON.Vector3(
-    parseFloat(lightX.value),
-    parseFloat(lightY.value),
-    parseFloat(lightZ.value)
-  );
 
   switch (type) {
     case "directional":
-      light = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(-1, -2, -1), scene);
+      light = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(0, -1, -1), scene);
       break;
     case "point":
-      light = new BABYLON.PointLight("pointLight", position, scene);
+      light = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(0, 3, -3), scene);
       break;
     case "spot":
-      light = new BABYLON.SpotLight("spotLight", position, new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
+      light = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 4, -4), BABYLON.Vector3.Zero(), Math.PI / 3, 2, scene);
       break;
     case "hemispheric":
       light = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 0), scene);
@@ -47,92 +25,127 @@ function createLight(type) {
 
 function updateLightProperties() {
   if (!light) return;
-  light.intensity = parseFloat(intensitySlider.value);
-  if (light.position) {
-    light.position.set(
-      parseFloat(lightX.value),
-      parseFloat(lightY.value),
-      parseFloat(lightZ.value)
-    );
+
+  const intensity = parseFloat(document.getElementById("intensitySlider").value);
+  const radius = parseFloat(document.getElementById("radiusSlider").value);
+  const x = parseFloat(document.getElementById("lightX").value);
+  const y = parseFloat(document.getElementById("lightY").value);
+  const z = parseFloat(document.getElementById("lightZ").value);
+
+  light.intensity = intensity;
+  if ("radius" in light) light.radius = radius;
+  if ("position" in light) light.position = new BABYLON.Vector3(x, y, z);
+
+  // Update shadow generator
+  if (shadowGenerator) shadowGenerator.dispose();
+  if (light.getShadowGenerator) {
+    shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+    if (model) shadowGenerator.addShadowCaster(model);
   }
-  if (light.radius !== undefined) {
-    light.radius = parseFloat(radiusSlider.value);
-  }
-}
 
-lightTypeSelect.addEventListener("change", () => createLight(lightTypeSelect.value));
-[intensitySlider, radiusSlider, lightX, lightY, lightZ].forEach(elem => {
-  elem.addEventListener("input", updateLightProperties);
-});
-
-scaleSlider.addEventListener("input", () => {
-  if (model) model.scaling.setAll(parseFloat(scaleSlider.value));
-});
-
-modelUpload.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const filename = file.name.toLowerCase();
-  const fileReader = new FileReader();
-
-  fileReader.onload = function () {
-    const arrayBuffer = this.result;
-    const blobUrl = URL.createObjectURL(new Blob([arrayBuffer]));
-
-    BABYLON.SceneLoader.ImportMesh("", "", blobUrl, scene, (meshes, _, skeletons, animGroups) => {
-      if (model) model.dispose();
-      model = meshes[0];
-      model.position = new BABYLON.Vector3(0, 0.5, 0);
-      model.scaling.setAll(parseFloat(scaleSlider.value));
-
-      animationGroups = animGroups;
-      loadAnimations();
-    });
-  };
-
-  fileReader.readAsArrayBuffer(file);
-});
-
-function loadAnimations() {
-  animationSelect.innerHTML = "<option value=''> (Tidak ada animasi) </option>";
-  if (animationGroups.length > 0) {
-    animationGroups.forEach((group, index) => {
-      const option = document.createElement("option");
-      option.textContent = group.name || `Animasi ${index + 1}`;
-      option.value = index;
-      animationSelect.appendChild(option);
-    });
+  // Update the light indicator position
+  if (lightIndicator) {
+    lightIndicator.position = light.position.clone();
   }
 }
 
-let currentPlaying = null;
-playBtn.addEventListener("click", () => {
-  const index = parseInt(animationSelect.value);
-  if (isNaN(index) || !animationGroups[index]) return;
+function createScene() {
+  scene = new BABYLON.Scene(engine);
+  scene.clearColor = new BABYLON.Color3(0.1, 0.1, 0.1);
 
-  if (currentPlaying && currentPlaying.isPlaying) {
-    currentPlaying.pause();
-    playBtn.textContent = "Putar";
-  } else {
-    if (currentPlaying && !currentPlaying.isPlaying) {
-      currentPlaying.play();
-    } else {
-      animationGroups.forEach(g => g.stop());
-      currentPlaying = animationGroups[index];
-      currentPlaying.start(true);
+  const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2.5, 4, BABYLON.Vector3.Zero(), scene);
+  camera.attachControl(canvas, true);
+  camera.useAutoRotationBehavior = true;
+
+  createLight("directional", scene);
+
+  const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
+  const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+  groundMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+  ground.material = groundMat;
+  ground.receiveShadows = true;
+
+  model = BABYLON.MeshBuilder.CreateBox("model", { size: 1 }, scene);
+  model.position.y = 0.5;
+  model.receiveShadows = true;
+  updateLightProperties();
+
+  // Create light position indicator
+  lightIndicator = BABYLON.MeshBuilder.CreateSphere("lightIndicator", { diameter: 0.2 }, scene);
+  lightIndicator.position = new BABYLON.Vector3(5, 5, 5);
+  lightIndicator.material = new BABYLON.StandardMaterial("lightMat", scene);
+  lightIndicator.material.emissiveColor = new BABYLON.Color3(1, 1, 0);  // Yellow
+
+  scene.onPointerObservable.add((pointerInfo) => {
+    if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERPICK && pointerInfo.pickInfo.hit) {
+      if (pointerInfo.pickInfo.pickedMesh === model) {
+        model.scaling = model.scaling.multiplyByFloats(5, 5, 5);
+      }
     }
-    playBtn.textContent = "Jeda";
-  }
+  });
+
+  return scene;
+}
+
+scene = createScene();
+engine.runRenderLoop(() => scene.render());
+window.addEventListener("resize", () => engine.resize());
+
+document.getElementById("scaleSlider").addEventListener("input", (e) => {
+  const scale = parseFloat(e.target.value);
+  if (model) model.scaling = new BABYLON.Vector3(scale, scale, scale);
 });
 
-downloadBtn.addEventListener("click", () => {
-  if (!model) return;
-  const gltfExport = BABYLON.GLTF2Export.GLB(scene, "exportedModel");
-  gltfExport.then(gltf => {
-    gltf.downloadFiles();
+["lightType", "intensitySlider", "radiusSlider", "lightX", "lightY", "lightZ"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    const type = document.getElementById("lightType").value;
+    createLight(type, scene);
   });
 });
 
-createLight("directional");
-engine.runRenderLoop(() => scene.render());
-window.addEventListener("resize", () => engine.resize());
+document.getElementById("modelUpload").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const fileReader = new FileReader();
+  fileReader.onload = () => {
+    const name = file.name.toLowerCase();
+    const data = new Uint8Array(fileReader.result);
+
+    BABYLON.SceneLoader.ImportMesh("", "file:", file, scene, (meshes) => {
+      if (model) model.dispose();
+      model = meshes[0];
+      model.position = new BABYLON.Vector3(0, 0.5, 0);
+      updateLightProperties();
+    });
+  };
+  fileReader.readAsArrayBuffer(file);
+});
+
+let animationStarted = false; // Flag to check if animation has started
+document.getElementById("playAnimationBtn").addEventListener("click", () => {
+  if (model && model.animations && model.animations.length > 0) {
+    if (!animationStarted) {
+      // Start the animation
+      scene.beginAnimation(model, 0, model.animations[0].frameCount, true);
+      animationStarted = true; // Set the flag to true
+    } else {
+      // Stop the animation if it's already playing
+      scene.stopAnimation(model);
+      animationStarted = false; // Reset the flag
+    }
+  } else {
+    alert("Model tidak memiliki animasi.");
+  }
+});
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  if (model) {
+    BABYLON.GLTF2Export.GLTFAsync(scene, "model.glb").then((glb) => {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(glb);
+      link.download = "model.glb";
+      link.click();
+    });
+  }
+});
