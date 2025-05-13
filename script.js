@@ -79,7 +79,7 @@ function createScene() {
   scene.onPointerObservable.add((pointerInfo) => {
     if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERPICK && pointerInfo.pickInfo.hit) {
       if (pointerInfo.pickInfo.pickedMesh === model) {
-        model.scaling = model.scaling.multiplyByFloats(1.1, 1.1, 1.1);
+        model.scaling = model.scaling.multiplyByFloats(5, 5, 5);
       }
     }
   });
